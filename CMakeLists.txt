@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(MyECommerceProject CXX)
+project(WearhouseManager CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -11,4 +11,4 @@ file(GLOB SOURCES
     ${PROJECT_SOURCE_DIR}/main.cpp
 )
 
-add_executable(MyECommerceProject ${SOURCES})
+add_executable(WearhouseManager ${SOURCES})
