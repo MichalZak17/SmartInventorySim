@@ -76,6 +76,37 @@ public:
      * @return A reference to the output stream
      */
     friend std::ostream& operator<<(std::ostream& os, const Order& order);
+
+    /**
+     * @brief Overloads the stream extraction operator to read order details
+     *
+     * This method allows order details to be read from an input stream.
+     *
+     * @param is The input stream
+     * @param order The order to populate
+     * @return A reference to the input stream
+     */
+    friend std::istream &operator>>(std::istream &is, Order &order);
+
+    /**
+     * @brief Removes an item from the order
+     *
+     * This method removes an item from the order with the specified product ID.
+     *
+     * @param productId The ID of the product to remove
+     */
+    void removeItem(int productId);
+
+    /**
+     * @brief Edits the quantity of an item in the order
+     *
+     * This method changes the quantity of an item in the order with the specified
+     * product ID to the new quantity.
+     *
+     * @param productId The ID of the product to edit
+     * @param newQuantity The new quantity of the product
+     */
+    void editItemQuantity(int productId, int newQuantity);
 };
 
 #endif

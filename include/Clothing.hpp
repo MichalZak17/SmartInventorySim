@@ -29,6 +29,18 @@ public:
              double weight, const std::string& size);
 
     void printInfo() const override;
+
+    /**
+     * @brief Input stream operator for the Clothing class.
+     *
+     * This operator reads the name, price, quantity, weight, and size
+     * of a clothing item from the input stream.
+     *
+     * @param is The input stream to read from.
+     * @param c The Clothing object to write to.
+     * @return The input stream after reading.
+     */
+    friend std::istream &operator>>(std::istream &is, Clothing &c);
 };
 
 #endif

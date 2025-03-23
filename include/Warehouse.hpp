@@ -1,9 +1,11 @@
 #ifndef WAREHOUSE_HPP
 #define WAREHOUSE_HPP
 
+#include <span>
 #include <vector>
 #include <string>
 #include <memory>
+#include <expected>
 #include <optional>     // We'll use optional instead of expected
 #include "Product.hpp"
 
@@ -67,7 +69,7 @@ public:
      * @return An optional containing a pointer to the found product, or
      *         std::nullopt if no product with the given ID exists
      */
-    std::optional<const Product*> findProductById(int id) const;
+    std::expected<const Product *, std::string> findProductById(int id) const;
 
     /**
      * @brief Prints information about all products in the given vector
@@ -78,7 +80,7 @@ public:
      * @param productVec A vector of unique pointers to Product objects whose
      *                   information will be printed
      */
-    void printProductsInfo(const std::vector<std::unique_ptr<Product>>& productVec) const;
+    void printProductsInfo(const std::vector<std::unique_ptr<Product>> &products) const;
 
     /**
      * @brief Sorts the products in the warehouse by price in ascending order

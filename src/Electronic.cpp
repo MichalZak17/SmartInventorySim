@@ -27,3 +27,20 @@ void Electronic::printInfo() const {
     std::cout << "Electronic: " << *this
               << " | Warranty: " << warranty_ << "\n";
 }
+
+/**
+ * @brief Input stream operator for the Electronic class.
+ *
+ * This operator reads the name, price, quantity, weight, and warranty
+ * of an electronic item from the input stream.
+ *
+ * @param is The input stream to read from.
+ * @param e The Electronic object to write to.
+ * @return The input stream after reading.
+ */
+std::istream &operator>>(std::istream &is, Electronic &e)
+{
+  is >> static_cast<TangibleProduct &>(e);
+  is >> e.warranty_;
+  return is;
+}

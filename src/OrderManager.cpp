@@ -29,3 +29,32 @@ void OrderManager::processAllOrders() {
         std::cout << o << "\n";
     });
 }
+
+/**
+ * @brief Gets the collection of orders stored in the OrderManager.
+ *
+ * This method returns a reference to the internal orders_ container, allowing
+ * external code to access and modify the orders stored in the OrderManager.
+ *
+ * @return A reference to the internal vector of Order objects
+ */
+Order &OrderManager::getOrder(size_t index)
+{
+    return orders_.at(index);
+}
+
+/**
+ * @brief Removes an order from the OrderManager by index.
+ *
+ * This method removes the order at the specified index from the internal orders_
+ * container. If the index is out of bounds, no action is taken.
+ *
+ * @param index The index of the order to remove
+ */
+void OrderManager::removeOrder(size_t index)
+{
+    if (index < orders_.size())
+    {
+        orders_.erase(orders_.begin() + index);
+    }
+}

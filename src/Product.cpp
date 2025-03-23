@@ -82,3 +82,21 @@ std::ostream& operator<<(std::ostream& os, const Product& prod) {
        << " | Qty: "   << prod.quantity_;
     return os;
 }
+
+/**
+ * @brief Input stream operator overload for Product class.
+ *
+ * Reads the name, price, and quantity properties of a Product from an input stream.
+ * This operator is used when reading Product data from files or standard input.
+ * Since Product is an abstract class, this operator will be used through derived classes
+ * that are cast to Product.
+ *
+ * @param is The input stream to read from
+ * @param prod The Product object to populate
+ * @return std::istream& Reference to the input stream after reading
+ */
+std::istream &operator>>(std::istream &is, Product &prod)
+{
+    is >> prod.name_ >> prod.price_ >> prod.quantity_;
+    return is;
+}

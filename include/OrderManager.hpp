@@ -21,6 +21,9 @@ public:
     void processAllOrders();
 
     const std::vector<Order>& getOrders() const { return orders_; }
+
+    Order &getOrder(size_t index);
+    void removeOrder(size_t index);
 };
 
 #endif

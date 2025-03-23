@@ -83,6 +83,9 @@ public:
     // Output operator
     friend std::ostream& operator<<(std::ostream& os, const Product& prod);
 
+    // Input operator
+    friend std::istream &operator>>(std::istream &is, Product &prod);
+
     // Nested class
     class Details {
     public:

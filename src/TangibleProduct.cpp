@@ -89,3 +89,19 @@ void TangibleProduct::printInfo() const {
     std::cout << "TangibleProduct: " << *this
               << " | Weight: " << weight_ << " kg\n";
 }
+
+/**
+ * @brief Overloaded input stream operator for TangibleProduct class
+ *
+ * @param is The input stream to read from
+ * @param tp The TangibleProduct object to fill with data
+ * @return std::istream& Reference to the input stream
+ *
+ * First reads the base part (Product), then reads the weight_ member variable.
+ */
+std::istream &operator>>(std::istream &is, TangibleProduct &tp)
+{
+    is >> static_cast<Product &>(tp);
+    is >> tp.weight_;
+    return is;
+}

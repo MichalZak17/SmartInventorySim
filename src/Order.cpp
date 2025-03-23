@@ -74,3 +74,63 @@ std::ostream& operator<<(std::ostream& os, const Order& order) {
     }
     return os;
 }
+
+/**
+ * @brief Overloaded stream extraction operator for Order class
+ *
+ * Reads the details of an order from an input stream. The format is expected to be:
+ * {n}
+ * {product_id_1} {quantity_1}
+ * {product_id_2} {quantity_2}
+ * ...
+ * where {n} is the number of products in the order.
+ *
+ * @param is The input stream to read from
+ * @param order The Order object to populate
+ * @return std::istream& Reference to the input stream for chaining
+ */
+std::istream &operator>>(std::istream &is, Order &order)
+{
+    int n;
+    is >> n;
+    for (int i = 0; i < n; ++i)
+    {
+        int pid, qty;
+        is >> pid >> qty;
+        order.items_[pid] = qty;
+    }
+    return is;
+}
+
+/**
+ * @brief Removes an item from the order
+ *
+ * This method removes an item from the order with the specified product ID.
+ *
+ * @param productId The ID of the product to remove
+ */
+void Order::removeItem(int productId)
+{
+    auto it = items_.find(productId);
+    if (it != items_.end())
+    {
+        items_.erase(it);
+    }
+}
+
+/**
+ * @brief Edits the quantity of an item in the order
+ *
+ * This method changes the quantity of an item in the order with the specified product ID.
+ *
+ * @param productId The ID of the product to edit
+ * @param newQuantity The new quantity of the product
+ */
+void Order::editItemQuantity(int productId, int newQuantity)
+{
+    auto it = items_.find(productId);
+    if (it != items_.end())
+    {
+        it->second = newQuantity;
+    }
+}

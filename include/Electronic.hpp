@@ -36,6 +36,13 @@ public:
      * its warranty period.
      */
     void printInfo() const override;
+
+    /**
+     * @brief Copy constructor for the Electronic class.
+     *
+     * @param other The Electronic object to copy from.
+     */
+    friend std::istream &operator>>(std::istream &is, Electronic &e);
 };
 
 #endif

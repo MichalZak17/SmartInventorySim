@@ -81,6 +81,13 @@ public:
      * @return The weight of the tangible product.
      */
     double getWeight() const { return weight_; }
+
+    /**
+     * @brief Sets the weight of the tangible product.
+     *
+     * @param newWeight The new weight of the tangible product.
+     */
+    friend std::istream &operator>>(std::istream &is, TangibleProduct &tp);
 };
 
 #endif

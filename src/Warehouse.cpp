@@ -42,37 +42,44 @@ std::optional<const Product*> Warehouse::findProductByName(const std::string& na
 
 /**
  * @brief Searches for a product with the specified ID in the warehouse.
- * 
+ *
  * This method iterates through the products in the warehouse and returns
- * a pointer to the product if found. The returned pointer points to the
- * product owned by the warehouse and should not be deleted by the caller.
+ * a product pointer wrapped in std::expected if found, or an error message
+ * if not found. The returned pointer points to the product owned by the
+ * warehouse and should not be deleted by the caller.
  *
  * @param id The ID of the product to find.
- * @return std::optional<const Product*> A pointer to the product if found,
- *         or std::nullopt if no product with the given ID exists.
+ * @return std::expected<const Product*, std::string> The product if found,
+ *         or an error message if no product with the given ID exists.
  */
-std::optional<const Product*> Warehouse::findProductById(int id) const {
+std::expected<const Product *, std::string> Warehouse::findProductById(int id) const
+{
     auto it = std::find_if(products_.begin(), products_.end(),
-        [&](const std::unique_ptr<Product>& p) {
-            return p->getId() == id;
-        }
-    );
+                           [&](const std::unique_ptr<Product> &p)
+                           {
+                               return p->getId() == id;
+                           });
     if (it != products_.end()) {
-        return it->get();
+        return std::expected<const Product *, std::string>(it->get());
     }
-    return std::nullopt;
+    else
+    {
+        return std::unexpected(std::string("Product with ID=") + std::to_string(id) + " not found");
+    }
 }
 
 /**
  * @brief Prints information about all products in the given vector.
- * 
- * This method iterates through each product in the provided vector and calls
- * the printInfo() method on each product to display its information.
- * 
- * @param productVec A vector of unique pointers to Product objects whose information will be printed
+ *
+ * This method iterates through each product in the provided vector and prints
+ * detailed information about each product to the standard output.
+ *
+ * @param products A vector of unique pointers to Product objects.
  */
-void Warehouse::printProductsInfo(const std::vector<std::unique_ptr<Product>>& productVec) const {
-    for (auto& p : productVec) {
+void Warehouse::printProductsInfo(const std::vector<std::unique_ptr<Product>> &products) const
+{
+    for (auto &p : products)
+    {
         p->printInfo();
     }
 }
