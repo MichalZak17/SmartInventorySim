@@ -1,5 +1,20 @@
 # SmartInventorySim
 
+## Table of Contents
+- [SmartInventorySim](#smartinventorysim)
+  - [Table of Contents](#table-of-contents)
+  - [Project Description](#project-description)
+  - [Purpose and Functionality](#purpose-and-functionality)
+  - [Installation Instructions](#installation-instructions)
+    - [Prerequisites](#prerequisites)
+    - [Steps](#steps)
+    - [Adding Products](#adding-products)
+    - [Creating Orders](#creating-orders)
+    - [Generating Reports](#generating-reports)
+  - [Contributing](#contributing)
+  - [Contact](#contact)
+  - [License](#license)
+
 ## Project Description
 
 SmartInventorySim is a warehouse management system designed to help businesses manage their inventory efficiently. The system allows users to add, find, and sort products, create and process orders, and generate reports. The project includes various product types such as electronics, clothing, and food, each with specific attributes.
@@ -16,11 +31,7 @@ The purpose of SmartInventorySim is to provide a comprehensive solution for mana
 ## Installation Instructions
 
 ### Prerequisites
-
-Before you begin, ensure you have the following installed on your machine:
-- C++ compiler (e.g., g++, clang++)
-- CMake (version 3.20 or higher)
-- Git
+Before you begin modifiying the project or using it for your own purposes, ensure you have `conda` and `git` installed on your system in order to avoid any issues during the installation process.
 
 ### Steps
 
@@ -30,28 +41,32 @@ Before you begin, ensure you have the following installed on your machine:
    cd SmartInventorySim
    ```
 
-2. Create a build directory and navigate to it:
+2. Create and activate a new conda environment with CMake and a C++ compiler:
+   ```sh
+   conda create --name smartinventorysim
+   conda activate smartinventorysim
+   ```
+
+3. Create a build directory and navigate to it:
    ```sh
    mkdir build
    cd build
    ```
 
-3. Run CMake to configure the project:
+4. Run CMake to configure the project:
    ```sh
    cmake ..
    ```
 
-4. Build the project:
+5. Build the project:
    ```sh
    make
    ```
 
-5. Run the executable:
+6. Run the executable:
    ```sh
-   ./MyECommerceProject
+   ./WearhouseManager
    ```
-
-## Examples and Usage Scenarios
 
 ### Adding Products
 
@@ -96,24 +111,15 @@ if (outFile.is_open()) {
 }
 ```
 
-## Contribution Guidelines
+## Contributing
 
-We welcome contributions to SmartInventorySim! If you would like to contribute, please follow these guidelines:
+Contributions are welcome! Fork the repo, create a branch, and submit a pull request.
 
-1. Fork the repository and create a new branch for your feature or bugfix.
-2. Write clear, concise commit messages.
-3. Ensure your code follows the project's coding standards.
-4. Write tests for your changes.
-5. Submit a pull request with a detailed description of your changes.
+## Contact
 
-## Contact Information
+Michał Żak  
+[michal.zak000@gmail.com](mailto:michal.zak000@gmail.com)
 
-For any questions or inquiries, please contact Michał Żak at michal.zak@example.com.
+## License
 
-## Cool Design and Layout
-
-To make the `README.md` visually appealing, we have used the following design elements:
-- Clear section headings
-- Code blocks for commands and examples
-- Bullet points for lists
-- Consistent formatting throughout the document
+Distributed under the MIT License.
