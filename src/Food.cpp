@@ -1,10 +1,10 @@
 #include "Food.hpp"
 #include <iostream>
+#include <iomanip> // For std::quoted (used in operator>>)
 
 /**
  * @brief Constructor for the Food class.
- * 
- * @param name The name of the food item.
+ * * @param name The name of the food item.
  * @param price The price of the food item.
  * @param quantity The quantity of the food item in inventory.
  * @param weight The weight of the food item.
@@ -18,21 +18,22 @@ Food::Food(const std::string& name, double price, int quantity,
 
 /**
  * @brief Prints information about the food item.
- * 
- * This method overrides the printInfo method in TangibleProduct to
+ * * This method overrides the printInfo method in TangibleProduct to
  * display specific information about the food item, including
  * its expiration date.
  */
 void Food::printInfo() const {
-    std::cout << "Food: " << *this
-              << " | Expires: " << expirationDate_ << "\n";
+  std::cout << "Food: " << static_cast<const Product &>(*this) // Display base Product info via its operator<<
+            << " | Weight: " << getWeight() << " kg"           // Explicitly add weight
+            << " | Expires: " << expirationDate_ << "\n";      // Add expiration date
 }
 
 /**
  * @brief Input stream operator for the Food class.
  *
  * This operator reads the name, price, quantity, weight, and expiration date
- * of a food item from the input stream.
+ * of a food item from the input stream. String attributes (name from Product, expirationDate from Food)
+ * are expected to be read using std::quoted if they contain spaces.
  *
  * @param is The input stream to read from.
  * @param f The Food object to write to.
@@ -40,7 +41,7 @@ void Food::printInfo() const {
  */
 std::istream &operator>>(std::istream &is, Food &f)
 {
-  is >> static_cast<TangibleProduct &>(f);
-  is >> f.expirationDate_;
+  is >> static_cast<TangibleProduct &>(f); // Reads Product (name, price, qty using std::quoted for name) and TangibleProduct (weight)
+  is >> std::quoted(f.expirationDate_);    // Read expirationDate, using std::quoted for robustness
   return is;
 }

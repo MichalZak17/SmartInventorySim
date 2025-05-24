@@ -1,10 +1,10 @@
 #include "Electronic.hpp"
 #include <iostream>
+#include <iomanip> // For std::quoted (used in operator>>)
 
 /**
  * @brief Constructor for the Electronic class.
- * 
- * @param name The name of the electronic item.
+ * * @param name The name of the electronic item.
  * @param price The price of the electronic item.
  * @param quantity The quantity of the electronic item in inventory.
  * @param weight The weight of the electronic item.
@@ -18,21 +18,22 @@ Electronic::Electronic(const std::string& name, double price, int quantity,
 
 /**
  * @brief Prints information about the electronic item.
- * 
- * This method overrides the printInfo method in TangibleProduct to
+ * * This method overrides the printInfo method in TangibleProduct to
  * display specific information about the electronic item, including
  * its warranty period.
  */
 void Electronic::printInfo() const {
-    std::cout << "Electronic: " << *this
-              << " | Warranty: " << warranty_ << "\n";
+  std::cout << "Electronic: " << static_cast<const Product &>(*this) // Display base Product info via its operator<<
+            << " | Weight: " << getWeight() << " kg"                 // Explicitly add weight
+            << " | Warranty: " << warranty_ << "\n";                 // Add warranty
 }
 
 /**
  * @brief Input stream operator for the Electronic class.
  *
  * This operator reads the name, price, quantity, weight, and warranty
- * of an electronic item from the input stream.
+ * of an electronic item from the input stream. String attributes (name from Product, warranty from Electronic)
+ * are expected to be read using std::quoted if they contain spaces.
  *
  * @param is The input stream to read from.
  * @param e The Electronic object to write to.
@@ -40,7 +41,7 @@ void Electronic::printInfo() const {
  */
 std::istream &operator>>(std::istream &is, Electronic &e)
 {
-  is >> static_cast<TangibleProduct &>(e);
-  is >> e.warranty_;
+  is >> static_cast<TangibleProduct &>(e); // Reads Product (name, price, qty using std::quoted for name) and TangibleProduct (weight)
+  is >> std::quoted(e.warranty_);          // Read warranty, using std::quoted for robustness
   return is;
 }

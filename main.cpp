@@ -4,6 +4,8 @@
 #include <string>
 #include <memory> // unique_ptr
 #include <vector>
+#include <iomanip>   // For std::quoted
+#include <algorithm> // For std::for_each
 
 #include "Warehouse.hpp"
 #include "OrderManager.hpp"
@@ -42,7 +44,7 @@ std::unique_ptr<Product> createProductFromUser()
     std::cout << "Your choice: ";
     int choice;
     std::cin >> choice;
-    clearInput();
+    clearInput(); // Clear the newline character after reading int
 
     // Create an empty object of the target type and read data using operator>>
     // (defined in derived classes)
@@ -51,37 +53,43 @@ std::unique_ptr<Product> createProductFromUser()
     case 1:
     {
         auto e = std::make_unique<Electronic>("tmp", 0.0, 0, 0.0, "no-warranty");
-        std::cout << "Enter data for Electronic: [name price quantity weight warranty]\n> ";
+        std::cout << "Enter data for Electronic: [\"name\" price quantity weight \"warranty\"]\n(Note: strings with spaces must be quoted, e.g., \"Laptop X1\" or \"2 years\")\n> ";
         std::cin >> *e;
         if (!std::cin.good())
         {
             clearInput();
             std::cerr << "Invalid data!\n";
+            return nullptr; // Return nullptr on bad input
         }
+        clearInput(); // Clear any remaining input on the line
         return e;
     }
     case 2:
     {
         auto c = std::make_unique<Clothing>("tmp", 0.0, 0, 0.0, "M");
-        std::cout << "Enter data for Clothing: [name price quantity weight size]\n> ";
+        std::cout << "Enter data for Clothing: [\"name\" price quantity weight \"size\"]\n(Note: strings with spaces must be quoted, e.g., \"Blue Jeans\" or \"XL\")\n> ";
         std::cin >> *c;
         if (!std::cin.good())
         {
             clearInput();
             std::cerr << "Invalid data!\n";
+            return nullptr; // Return nullptr on bad input
         }
+        clearInput(); // Clear any remaining input on the line
         return c;
     }
     case 3:
     {
         auto f = std::make_unique<Food>("tmp", 0.0, 0, 0.0, "2099-12-31");
-        std::cout << "Enter data for Food: [name price quantity weight expirationDate]\n> ";
+        std::cout << "Enter data for Food: [\"name\" price quantity weight \"expirationDate\"]\n(Note: strings with spaces must be quoted, e.g., \"Organic Apples\" or \"2025-12-31\")\n> ";
         std::cin >> *f;
         if (!std::cin.good())
         {
             clearInput();
             std::cerr << "Invalid data!\n";
+            return nullptr; // Return nullptr on bad input
         }
+        clearInput(); // Clear any remaining input on the line
         return f;
     }
     default:
@@ -95,7 +103,8 @@ std::unique_ptr<Product> createProductFromUser()
  *
  * This function reads product data from the specified file and adds them to the warehouse.
  * Each product line starts with the product type (Electronic, Clothing, or Food) followed by
- * the specific product attributes.
+ * the specific product attributes (name, price, quantity, weight, specific_attribute).
+ * String attributes like name, warranty, size, expirationDate are expected to be quoted if they contain spaces.
  *
  * @param filename The path to the file to load products from
  * @param warehouse The Warehouse object to add products to
@@ -109,43 +118,59 @@ void loadProductsFromFile(const std::string &filename, Warehouse &warehouse)
         return;
     }
 
-    while (!file.eof())
+    std::string type;
+    while (file >> type) // Read product type, loop continues if successful
     {
-        std::string type;
-        file >> type;
-        if (!file.good())
-            break;
-
         if (type == "Electronic")
         {
             auto e = std::make_unique<Electronic>("", 0.0, 0, 0.0, "");
-            file >> *e;
+            file >> *e; // Uses Electronic::operator>>
             if (file.good())
             {
                 warehouse.addProduct(std::move(e));
+            }
+            else if (!file.eof()) // Error occurred before EOF
+            {
+                std::cerr << "Error reading Electronic product data from file.\n";
+                file.clear();                                                   // Clear error flags
+                file.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Skip to next line
             }
         }
         else if (type == "Clothing")
         {
             auto c = std::make_unique<Clothing>("", 0.0, 0, 0.0, "M");
-            file >> *c;
+            file >> *c; // Uses Clothing::operator>>
             if (file.good())
             {
                 warehouse.addProduct(std::move(c));
+            }
+            else if (!file.eof())
+            {
+                std::cerr << "Error reading Clothing product data from file.\n";
+                file.clear();
+                file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             }
         }
         else if (type == "Food")
         {
             auto f = std::make_unique<Food>("", 0.0, 0, 0.0, "2099-01-01");
-            file >> *f;
+            file >> *f; // Uses Food::operator>>
             if (file.good())
             {
                 warehouse.addProduct(std::move(f));
             }
+            else if (!file.eof())
+            {
+                std::cerr << "Error reading Food product data from file.\n";
+                file.clear();
+                file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
         }
         else
         {
-            std::cerr << "Unknown product type: " << type << "\n";
+            std::cerr << "Unknown product type in file: " << type << "\n";
+            // Skip the rest of the line for unknown type
+            file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
     }
 
@@ -159,9 +184,10 @@ void loadProductsFromFile(const std::string &filename, Warehouse &warehouse)
  * This function writes the list of products stored in the given warehouse
  * to a text file. It uses dynamic_cast to determine the actual type of each product
  * (Electronic, Clothing, or Food) and writes their details to the file in a specific format.
+ * String attributes are saved using std::quoted to handle spaces.
  *
- * The output format should match the format expected by the corresponding input operator (operator>>),
- * especially for more complex types like Electronic (e.g. warranty or additional attributes).
+ * The output format matches the format expected by the corresponding input operator (operator>>),
+ * specifically: type_string "name" price quantity weight "specific_attribute".
  *
  * @param filename The name of the file to save the products to.
  * @param warehouse The warehouse containing the products to be saved.
@@ -178,25 +204,38 @@ void saveProductsToFile(const std::string &filename, const Warehouse &warehouse)
         return;
     }
 
-    // Simplified version: use dynamic_cast to recognize the type and save it
-    for (auto &p : warehouse.getProducts())
+    for (const auto &p_ptr : warehouse.getProducts())
     {
-        if (auto ep = dynamic_cast<Electronic *>(p.get()))
+        if (const auto *ep = dynamic_cast<const Electronic *>(p_ptr.get()))
         {
-            file << "Electronic " << *ep << " " << ep->getWeight() << " "
-                 << /* warranty – you must read/write in the same order as in operator>> */ "\n";
+            file << "Electronic "
+                 << std::quoted(ep->getName()) << " "
+                 << ep->getPrice() << " "
+                 << ep->getQuantity() << " "
+                 << ep->getWeight() << " "
+                 << std::quoted(ep->getWarranty()) << "\n";
         }
-        else if (auto cp = dynamic_cast<Clothing *>(p.get()))
+        else if (const auto *cp = dynamic_cast<const Clothing *>(p_ptr.get()))
         {
-            file << "Clothing " << *cp << " " << cp->getWeight() << "\n";
+            file << "Clothing "
+                 << std::quoted(cp->getName()) << " "
+                 << cp->getPrice() << " "
+                 << cp->getQuantity() << " "
+                 << cp->getWeight() << " "
+                 << std::quoted(cp->getSize()) << "\n";
         }
-        else if (auto fp = dynamic_cast<Food *>(p.get()))
+        else if (const auto *fp = dynamic_cast<const Food *>(p_ptr.get()))
         {
-            file << "Food " << *fp << " " << fp->getWeight() << "\n";
+            file << "Food "
+                 << std::quoted(fp->getName()) << " "
+                 << fp->getPrice() << " "
+                 << fp->getQuantity() << " "
+                 << fp->getWeight() << " "
+                 << std::quoted(fp->getExpirationDate()) << "\n";
         }
         else
         {
-            // Unknown type
+            std::cerr << "Unknown product type encountered during save: product ID " << p_ptr->getId() << ". Skipping." << std::endl;
         }
     }
 
@@ -215,12 +254,10 @@ void saveProductsToFile(const std::string &filename, const Warehouse &warehouse)
  * @param orderManager The OrderManager object to manage orders
  *
  * @note This function uses the standard input/output streams for user interaction.
- *      It may not handle invalid input gracefully.
  */
 void runMenu(Warehouse &warehouse, OrderManager &orderManager)
 {
     bool running = true;
-
     while (running)
     {
         std::cout << "\n================ MENU ================\n"
@@ -236,7 +273,6 @@ void runMenu(Warehouse &warehouse, OrderManager &orderManager)
                   << "10. Display all orders\n"
                   << "0. Exit\n"
                   << "[?] Your choice: ";
-
         int choice;
         std::cin >> choice;
         if (!std::cin.good())
@@ -245,6 +281,7 @@ void runMenu(Warehouse &warehouse, OrderManager &orderManager)
             std::cerr << "Invalid input.\n";
             continue;
         }
+        clearInput(); // Clear newline after reading choice
 
         switch (choice)
         {
@@ -255,7 +292,7 @@ void runMenu(Warehouse &warehouse, OrderManager &orderManager)
         case 1:
         {
             std::cout << "Warehouse products:\n";
-            warehouse.printProductsInfo(warehouse.getProducts());
+            warehouse.printProductsInfo(warehouse.getProducts()); // getProducts() returns a vector, implicitly convertible to span
             break;
         }
         case 2:
@@ -272,7 +309,7 @@ void runMenu(Warehouse &warehouse, OrderManager &orderManager)
         {
             std::cout << "Enter file name to load [e.g. data/input_data.txt]: ";
             std::string fname;
-            std::cin >> fname;
+            std::getline(std::cin, fname); // Use getline to read filename with potential spaces, though unlikely needed here
             loadProductsFromFile(fname, warehouse);
             break;
         }
@@ -280,31 +317,40 @@ void runMenu(Warehouse &warehouse, OrderManager &orderManager)
         {
             std::cout << "Enter file name to save [e.g. data/output_data.txt]: ";
             std::string fname;
-            std::cin >> fname;
+            std::getline(std::cin, fname);
             saveProductsToFile(fname, warehouse);
             break;
         }
         case 5:
         {
             Order newOrder;
-            auto &prods = warehouse.getProducts();
+            const auto &prods = warehouse.getProducts(); // Use const auto&
             if (prods.empty())
             {
                 std::cout << "Warehouse is empty. No products available for order!\n";
                 break;
             }
 
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 3; i++) // Create an order with 3 random items
             {
-                int idx = RandomGenerator::getRandomInt(0, (int)prods.size() - 1);
+                if (prods.empty())
+                    break; // Should not happen if initial check passed but good for safety
+                int idx = RandomGenerator::getRandomInt(0, static_cast<int>(prods.size()) - 1);
                 int qty = RandomGenerator::getRandomInt(1, 5);
                 newOrder.addItem(*prods[idx], qty);
             }
-            orderManager.createOrder(newOrder);
-            std::cout << "Created an order with 3 random products!\n";
+            if (newOrder.itemCount() > 0)
+            {
+                orderManager.createOrder(newOrder);
+                std::cout << "Created an order with " << newOrder.itemCount() << " random product(s)!\n";
+            }
+            else
+            {
+                std::cout << "Could not create a random order (perhaps warehouse became empty).\n";
+            }
             break;
         }
-        case 6:
+        case 6: // Edit order
         {
             auto &orders = orderManager.getOrders();
             if (orders.empty())
@@ -313,16 +359,18 @@ void runMenu(Warehouse &warehouse, OrderManager &orderManager)
                 break;
             }
             std::cout << "Enter order index [0.."
-                      << orders.size() - 1 << "]: ";
+                      << (orders.size() > 0 ? orders.size() - 1 : 0) << "]: ";
             size_t idx;
             std::cin >> idx;
-            if (idx >= orders.size())
+            if (!std::cin.good() || idx >= orders.size())
             {
+                clearInput();
                 std::cerr << "Invalid index!\n";
                 break;
             }
-            Order &ord = orderManager.getOrder(idx);
+            clearInput(); // Clear newline
 
+            Order &ord = orderManager.getOrder(idx);
             std::cout << "Editing order:\n"
                       << ord
                       << "\n--- Available actions ---\n"
@@ -338,16 +386,24 @@ void runMenu(Warehouse &warehouse, OrderManager &orderManager)
                 clearInput();
                 break;
             }
+            clearInput(); // Clear newline
 
             if (subChoice == 1)
             {
                 std::cout << "Enter product ID and quantity:\n> ";
                 int pid, q;
                 std::cin >> pid >> q;
-                auto result = warehouse.findProductById(pid);
-                if (result)
+                if (!std::cin.good() || q <= 0)
                 {
-                    ord.addItem(**result, q);
+                    clearInput();
+                    std::cerr << "Invalid product ID or quantity.\n";
+                    break;
+                }
+                clearInput();
+                auto result = warehouse.findProductById(pid);
+                if (result) // std::expected has value
+                {
+                    ord.addItem(**result, q); // **result gives const Product&
                     std::cout << "Added to order.\n";
                 }
                 else
@@ -360,6 +416,13 @@ void runMenu(Warehouse &warehouse, OrderManager &orderManager)
                 std::cout << "Enter product ID to remove:\n> ";
                 int pid;
                 std::cin >> pid;
+                if (!std::cin.good())
+                {
+                    clearInput();
+                    std::cerr << "Invalid product ID.\n";
+                    break;
+                }
+                clearInput();
                 ord.removeItem(pid);
                 std::cout << "Removed from order.\n";
             }
@@ -368,6 +431,13 @@ void runMenu(Warehouse &warehouse, OrderManager &orderManager)
                 std::cout << "Enter product ID and new quantity:\n> ";
                 int pid, newQty;
                 std::cin >> pid >> newQty;
+                if (!std::cin.good() || newQty < 0)
+                { // Allow 0 to effectively remove or just disallow? For now, <0 is bad.
+                    clearInput();
+                    std::cerr << "Invalid product ID or quantity.\n";
+                    break;
+                }
+                clearInput();
                 ord.editItemQuantity(pid, newQty);
                 std::cout << "Quantity changed.\n";
             }
@@ -377,7 +447,7 @@ void runMenu(Warehouse &warehouse, OrderManager &orderManager)
             }
             break;
         }
-        case 7:
+        case 7: // Delete order
         {
             auto &orders = orderManager.getOrders();
             if (orders.empty())
@@ -386,17 +456,19 @@ void runMenu(Warehouse &warehouse, OrderManager &orderManager)
                 break;
             }
             std::cout << "Enter order index [0.."
-                      << orders.size() - 1 << "]: ";
+                      << (orders.size() > 0 ? orders.size() - 1 : 0) << "]: ";
             size_t idx;
             std::cin >> idx;
-            if (idx < orders.size())
+            if (!std::cin.good() || idx >= orders.size())
             {
-                orderManager.removeOrder(idx);
-                std::cout << "Order deleted.\n";
+                clearInput();
+                std::cerr << "Invalid index!\n";
             }
             else
             {
-                std::cerr << "Invalid index!\n";
+                clearInput();
+                orderManager.removeOrder(idx);
+                std::cout << "Order deleted.\n";
             }
             break;
         }
@@ -407,26 +479,26 @@ void runMenu(Warehouse &warehouse, OrderManager &orderManager)
         }
         case 9:
         {
-            warehouse();
+            warehouse(); // Calls Warehouse::operator()
             std::cout << "Prices reduced by 1%.\n";
             break;
         }
         case 10:
         {
-            auto &orders = orderManager.getOrders();
+            const auto &orders = orderManager.getOrders(); // Use const auto&
             if (orders.empty())
             {
                 std::cout << "No orders.\n";
             }
             else
             {
-                for (size_t i = 0; i < orders.size(); ++i)
-                {
-                    std::cout << "\n--- Order #" << i << " ---\n"
-                              << orders[i] << "\n";
-                    double tp = orders[i].totalPrice(warehouse.getProducts());
-                    std::cout << "Total price: " << tp << "\n";
-                }
+                size_t index = 0;
+                std::for_each(orders.begin(), orders.end(), [&](const Order &o)
+                              {
+                    std::cout << "\n--- Order #" << index++ << " ---\n" << o; // operator<< for order already adds newline
+                    // totalPrice now takes const Warehouse&
+                    double tp = o.totalPrice(warehouse);
+                    std::cout << "Total price: " << tp << "\n"; });
             }
             break;
         }
@@ -443,13 +515,21 @@ int main()
     OrderManager orderManager;
 
     // Example products
+    // Note: Names with spaces like "Laptop Pro" and warranties like "2 years"
+    // will be handled correctly by std::quoted during file I/O.
+    // If adding manually via createProductFromUser, user needs to input them as "Laptop Pro", "2 years".
     warehouse.addProduct(std::make_unique<Electronic>("Laptop Pro", 4500.0, 10, 1.2, "2 years"));
     warehouse.addProduct(std::make_unique<Clothing>("Jeans", 150.0, 25, 0.4, "M"));
     warehouse.addProduct(std::make_unique<Food>("Yogurt", 3.5, 100, 0.2, "2024-10-01"));
+    warehouse.addProduct(std::make_unique<Electronic>("Smartphone Alpha", 2100.0, 15, 0.15, "1 year warranty"));
+    warehouse.addProduct(std::make_unique<Clothing>("Silk Scarf", 89.90, 30, 0.05, "One Size"));
+    warehouse.addProduct(std::make_unique<Food>("Imported Cheese", 25.0, 50, 0.25, "2024-12-15"));
 
     /**
      * If we want to sort products by price, we can use:
      * warehouse.sortByPriceAscending();
+     * std::cout << "\n--- Products sorted by price ---" << std::endl;
+     * warehouse.printProductsInfo(warehouse.getProducts());
      */
 
     // Start the main menu
